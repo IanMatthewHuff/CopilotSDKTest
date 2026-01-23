@@ -20,7 +20,7 @@ This document captures our planning process for building an application using th
 
 ---
 
-## Deep Dive: Top Two Candidates
+## Deep Dive: Top Three Candidates
 
 ---
 
@@ -174,19 +174,123 @@ Bot: "Hey! It's a rainy Thursday evening. Last time you had cozy-gray
 
 ---
 
+### 3. Retirement Planning Advisor 💰
+
+**Core Concept**: A conversational retirement planner that learns about your financial situation, personality, and goals to build a comprehensive, personalized retirement plan.
+
+#### Why It's Interesting for SDK
+
+Financial calculations are **perfect for tools** - they're deterministic logic the LLM shouldn't guess at. Compound interest, inflation adjustments, and tax calculations need precision.
+
+#### Features
+
+| Feature | Description |
+|---------|-------------|
+| **Profile Building** | Gather income, expenses, savings, debts, risk tolerance through conversation |
+| **Retirement Projection** | "When can I retire?" with current trajectory |
+| **Gap Analysis** | "You need $X more/month to retire at 60" |
+| **Scenario Comparison** | "What if I saved $200 more?" / "What if I retire at 62 instead?" |
+| **Risk Assessment** | Match investment suggestions to personality/risk tolerance |
+| **Social Security Optimization** | When to claim for maximum benefit |
+
+#### Custom Tools
+
+| Tool | Purpose |
+|------|---------|
+| `calculateCompoundGrowth(principal, rate, years)` | Project investment growth |
+| `projectRetirementDate(savings, income, expenses, target)` | When can they retire? |
+| `estimateSocialSecurity(birthYear, earnings)` | Estimate SS benefits |
+| `calculateRequiredSavingsRate(age, retireAge, goal)` | How much to save monthly |
+| `getTaxBracket(income, filingStatus)` | Current/projected tax situation |
+| `adjustForInflation(amount, years)` | Future value calculations |
+| `getUserFinancialProfile()` | Retrieve saved profile |
+| `saveUserFinancialProfile(data)` | Persist profile |
+| `compareScenarios(scenarioA, scenarioB)` | Side-by-side projection comparison |
+
+#### SDK Features Exercised
+
+- **Custom Tools**: 9 tools - heavy on calculations (strongest tool usage of all candidates)
+- **Sessions**: Build and maintain financial profile over conversations
+- **Streaming**: Stream explanations of complex projections and scenarios
+- **Multi-step**: Gather profile → project trajectory → identify gaps → suggest adjustments → compare scenarios
+
+#### Sample Interaction
+
+```
+Bot: "Let's start building your retirement picture. What's your current age?"
+User: "42"
+Bot: "And when would you ideally like to retire?"
+User: "60 if possible"
+Bot: "Got it - that's an 18-year runway. Do you have a sense of your current 
+     retirement savings across all accounts?"
+User: "About $280,000 total"
+Bot: "Great start! And roughly how much are you saving per month right now?"
+User: "$1,500"
+Bot: [Calls calculateCompoundGrowth, projectRetirementDate tools]
+     "Based on 7% average growth and your current savings rate, you're 
+      projected to have about $1.2M by age 60. 
+      
+      For a comfortable retirement lasting 30 years, most planners recommend 
+      $1.5-2M depending on lifestyle. You're on a solid track but have a 
+      gap of roughly $300-800K.
+      
+      Want me to show you what happens if we bump savings to $2,000/month?"
+```
+
+#### Pros & Cons
+
+| Pros | Cons |
+|------|------|
+| **Strongest tool usage** - calculations must be precise | Sensitive topic - needs disclaimers |
+| Broad appeal (everyone retires) | Less fun/visual than pedals |
+| Serious/professional demo | Not hobby-related |
+| Clear value proposition | More complex state to manage |
+| Multi-scenario comparisons showcase sessions | Could feel "corporate" |
+
+---
+
+## Comparison Summary
+
+| Criteria | Pedal Advisor 🎸 | Book Recommender 📚 | Retirement Planner 💰 |
+|----------|------------------|---------------------|----------------------|
+| **Custom Tools** | ⭐⭐ (5-7 tools, some optional) | ⭐⭐ (7 tools, context-heavy) | ⭐⭐⭐ (9 tools, calculation-heavy) |
+| **Tool Necessity** | Medium - LLM knows pedals | Medium - LLM knows books | **High** - must use tools for math |
+| **Sessions** | ⭐⭐ (save board) | ⭐⭐⭐ (profile over time) | ⭐⭐⭐ (financial profile) |
+| **Streaming** | ⭐⭐ (explanations) | ⭐⭐ (vibe analysis) | ⭐⭐ (projections) |
+| **Multi-step** | ⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐ |
+| **Visual Appeal** | ⭐⭐⭐ (pedal images) | ⭐⭐ (book covers) | ⭐ (charts?) |
+| **Demo Friendliness** | ⭐⭐⭐ (quick, visual) | ⭐⭐ (needs profile buildup) | ⭐⭐ (needs data entry) |
+| **Broad Appeal** | ⭐ (guitarists only) | ⭐⭐⭐ (everyone reads) | ⭐⭐⭐ (everyone retires) |
+| **Personal/Fun** | ⭐⭐⭐ (hobby!) | ⭐⭐⭐ (whimsical) | ⭐ (serious) |
+| **Build Effort** | Medium | Medium | Medium-High |
+
+**Bottom Line**:
+- **Best for SDK exercise**: Retirement Planner (tools are essential, not optional)
+- **Best for demos**: Pedal Advisor (visual, quick, fun)
+- **Best for delight**: Book Recommender (whimsical, unique)
+
+---
+
 ## Final Concept
 
-### Decision: Guitar Pedal Advisor 🎸
+### Decision: Retirement Planning Advisor 💰
 
-**Chosen over**: Vibe-Based Book Recommender
+**Chosen over**: Guitar Pedal Advisor, Vibe-Based Book Recommender
 
 **Reasoning**:
-- **More immediately useful** - Solves real problems guitarists face daily
-- **Less data required** - Pedal database is finite and manageable; book recommender would need extensive reading history to shine
-- **Better for demos** - Concrete inputs/outputs are easier to showcase quickly
-- **Still exercises SDK well** - Custom tools, sessions, multi-step, streaming all covered
+- **Strongest SDK exercise** - Financial calculations *require* tools; LLM can't guess at compound interest or tax brackets
+- **Broad appeal** - Everyone thinks about retirement; more relatable demo
+- **Clear multi-step flow** - Profile building → projection → gap analysis → scenario comparison
+- **Session-heavy** - Financial profile naturally persists and evolves across conversations
 
-**Note**: The Vibe-Based Book Recommender remains an interesting concept worth revisiting in the future.
+**Trade-offs accepted**:
+- Less visual/fun than pedal advisor
+- Not hobby-related (but more practical)
+- Needs financial disclaimers
+
+**Notes**: 
+- Pedal Advisor remains a fun option for hobby-focused demos
+- Book Recommender is the most whimsical/delightful if revisiting later
 
 ---
 
