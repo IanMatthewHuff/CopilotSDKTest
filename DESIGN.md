@@ -101,14 +101,14 @@ Advisor: [Calls calculateCompoundGrowth, projectRetirementDate]
           - Current savings: $280,000
           - Monthly contribution: $1,500
           - Assuming 7% average annual return
-          - Projected value at age 60: ~$1,180,000
+          - Projected value at age 60: ~$1,630,000
           
           For a 30-year retirement, a common guideline is to have 
           25x your annual expenses saved. If you plan to spend $50,000/year 
           in retirement, you'd want around $1,250,000.
           
-          You're close. At your current pace, you'd likely hit that 
-          target around age 61-62.
+          Good news - you're on track. At your current pace, you'd hit 
+          that target around age 57.
           
           Would you like to explore what happens if you adjust your 
           monthly contribution?"
