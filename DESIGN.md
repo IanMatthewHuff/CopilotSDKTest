@@ -464,3 +464,45 @@ Example: "Before we start, a quick note: I can help you think through retirement
   - Common ranges for reference
 - Calculate target using 25x annual expenses (4% withdrawal rule)
 - Explain the math in plain terms
+
+---
+
+## Implementation Checklist
+
+### Phase 1: Project Setup
+- [ ] Initialize TypeScript project with strict mode
+- [ ] Set up Vitest for testing
+- [ ] Create folder structure (`src/`, `src/tools/`, `src/lib/`, `src/types/`, `tests/`)
+- [ ] Add npm scripts (build, test, start)
+
+### Phase 2: Core Types & Calculations
+- [ ] Define `UserProfile` and `ProjectionResult` types
+- [ ] Implement `calculateCompoundGrowth()` function
+- [ ] Implement `adjustForInflation()` function
+- [ ] Write unit tests for calculation functions
+
+### Phase 3: Profile Storage
+- [ ] Implement `saveProfile()` function (write to `~/.retirement-planner/`)
+- [ ] Implement `loadProfile()` function
+- [ ] Write tests for profile storage
+- [ ] Handle edge cases (missing directory, invalid JSON)
+
+### Phase 4: SDK Tools
+- [ ] Create `compoundGrowthTool` wrapper
+- [ ] Create `inflationTool` wrapper
+- [ ] Create `saveProfileTool` wrapper
+- [ ] Create `loadProfileTool` wrapper
+- [ ] Create tool index that exports all tools
+
+### Phase 5: CLI & Conversation
+- [ ] Set up Copilot SDK client
+- [ ] Create session with system prompt and tools
+- [ ] Implement readline-based conversation loop
+- [ ] Handle streaming responses
+- [ ] Add quit/exit handling
+
+### Phase 6: Polish & Testing
+- [ ] End-to-end manual testing
+- [ ] Refine system prompt based on testing
+- [ ] Add README with usage instructions
+- [ ] Final cleanup and documentation
