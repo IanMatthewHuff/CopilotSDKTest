@@ -13,6 +13,21 @@
 - **Self-explanatory code**: No comments needed—the code should speak for itself
 - Don't over-comment; prefer clear naming over excessive documentation
 
+## Workflow
+
+### Pull Request Strategy
+- **Implement in small, reviewable chunks** — each PR should be focused and digestible
+- **One logical change per PR** — don't bundle unrelated changes
+- **PR should be independently testable** — each chunk should work on its own
+- **Manual verification before moving on** — wait for approval/review before starting next chunk
+- **Focus on logical coherence** — a PR should represent a complete, self-contained piece of work (e.g., "add calculation functions + tests" or "implement profile storage")
+
+### Implementation Order
+- Start with foundational pieces (types, utilities, pure functions)
+- Add tests alongside implementation
+- Build up to integration points (SDK, CLI) last
+- Each PR should leave the codebase in a working state
+
 ## Testing
 
 - **Unit tests are required** as features are implemented
