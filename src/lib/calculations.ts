@@ -1,4 +1,4 @@
-import type { CompoundGrowthResult } from "../types/index.js";
+import type { CompoundGrowthResult, IncomeFlow, IncomeFlowSummary } from "../types/index.js";
 
 /**
  * Calculate the future value of investments with compound growth.
@@ -121,4 +121,111 @@ export function projectRetirementAge(
   }
 
   return null;
+}
+
+/**
+ * Generate a unique ID for an income flow.
+ */
+export function generateIncomeFlowId(): string {
+  return `inc_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+/**
+ * Calculate the total monthly income from all flows at a given age.
+ *
+ * @param incomeFlows - Array of income flows
+ * @param age - Age to calculate income for
+ * @returns Total monthly income at that age
+ */
+export function calculateMonthlyIncomeAtAge(
+  incomeFlows: IncomeFlow[],
+  age: number
+): number {
+  return incomeFlows.reduce((total, flow) => {
+    const isActive = age >= flow.startAge && (flow.endAge === undefined || age < flow.endAge);
+    return total + (isActive ? flow.monthlyAmount : 0);
+  }, 0);
+}
+
+/**
+ * Calculate the lifetime value of an income flow.
+ *
+ * @param flow - The income flow
+ * @param retirementAge - Age at retirement
+ * @param lifeExpectancy - Expected age at death (default 95)
+ * @param inflationRate - Annual inflation rate for non-adjusted flows
+ * @returns Total lifetime value in today's dollars
+ */
+export function calculateIncomeFlowLifetimeValue(
+  flow: IncomeFlow,
+  retirementAge: number,
+  lifeExpectancy: number = 95,
+  inflationRate: number = 0.03
+): number {
+  const effectiveStartAge = Math.max(flow.startAge, retirementAge);
+  const effectiveEndAge = flow.endAge ?? lifeExpectancy;
+  
+  if (effectiveStartAge >= effectiveEndAge) {
+    return 0;
+  }
+
+  const years = effectiveEndAge - effectiveStartAge;
+  const annualAmount = flow.monthlyAmount * 12;
+  
+  if (flow.inflationAdjusted) {
+    // Inflation-adjusted income maintains purchasing power
+    // Simple calculation: annual amount * years
+    return Math.round(annualAmount * years);
+  } else {
+    // Non-inflation-adjusted income loses purchasing power over time
+    // Calculate present value of declining real income
+    let totalValue = 0;
+    for (let year = 0; year < years; year++) {
+      const realValue = annualAmount / Math.pow(1 + inflationRate, year);
+      totalValue += realValue;
+    }
+    return Math.round(totalValue);
+  }
+}
+
+/**
+ * Calculate summary of all income flows for retirement planning.
+ *
+ * @param incomeFlows - Array of income flows
+ * @param retirementAge - Age at retirement
+ * @param lifeExpectancy - Expected age at death (default 95)
+ * @param inflationRate - Annual inflation rate (default 0.03)
+ * @returns Summary of income flows including savings reduction
+ */
+export function calculateIncomeFlowSummary(
+  incomeFlows: IncomeFlow[],
+  retirementAge: number,
+  lifeExpectancy: number = 95,
+  inflationRate: number = 0.03
+): IncomeFlowSummary {
+  const breakdown = incomeFlows.map((flow) => ({
+    name: flow.name,
+    monthlyAmount: flow.monthlyAmount,
+    lifetimeValue: calculateIncomeFlowLifetimeValue(
+      flow,
+      retirementAge,
+      lifeExpectancy,
+      inflationRate
+    ),
+  }));
+
+  const totalMonthlyIncome = calculateMonthlyIncomeAtAge(incomeFlows, retirementAge);
+  const totalLifetimeValue = breakdown.reduce((sum, item) => sum + item.lifetimeValue, 0);
+  
+  // Savings reduction: how much less you need saved because of income flows
+  // Using 4% rule: each dollar of annual income reduces needed savings by $25
+  const annualIncome = totalMonthlyIncome * 12;
+  const savingsReduction = Math.round(annualIncome * 25);
+
+  return {
+    totalMonthlyIncome,
+    totalLifetimeValue,
+    savingsReduction,
+    breakdown,
+  };
 }
