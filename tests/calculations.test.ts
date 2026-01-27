@@ -8,8 +8,12 @@ import {
   calculateMonthlyIncomeAtAge,
   calculateIncomeFlowLifetimeValue,
   calculateIncomeFlowSummary,
+  validateAssetAllocation,
+  calculateExpectedReturn,
+  describeAllocationStyle,
+  suggestAllocationByTimeHorizon,
 } from "../src/lib/calculations.js";
-import type { IncomeFlow } from "../src/types/index.js";
+import type { IncomeFlow, AssetAllocation } from "../src/types/index.js";
 
 describe("calculateCompoundGrowth", () => {
   it("should calculate future value with no contributions", () => {
@@ -256,6 +260,190 @@ describe("income flow calculations", () => {
       expect(summary.totalLifetimeValue).toBe(0);
       expect(summary.savingsReduction).toBe(0);
       expect(summary.breakdown).toHaveLength(0);
+    });
+  });
+});
+
+describe("asset allocation calculations", () => {
+  const balancedAllocation: AssetAllocation = {
+    usStocks: 40,
+    internationalStocks: 20,
+    bonds: 35,
+    cash: 5,
+  };
+
+  const aggressiveAllocation: AssetAllocation = {
+    usStocks: 60,
+    internationalStocks: 30,
+    bonds: 8,
+    cash: 2,
+  };
+
+  const conservativeAllocation: AssetAllocation = {
+    usStocks: 15,
+    internationalStocks: 10,
+    bonds: 65,
+    cash: 10,
+  };
+
+  describe("validateAssetAllocation", () => {
+    it("should validate allocation that sums to 100", () => {
+      const result = validateAssetAllocation(balancedAllocation);
+      expect(result.isValid).toBe(true);
+      expect(result.error).toBeUndefined();
+    });
+
+    it("should reject allocation that sums to less than 100", () => {
+      const invalid: AssetAllocation = {
+        usStocks: 40,
+        internationalStocks: 20,
+        bonds: 30,
+        cash: 5,
+      };
+      const result = validateAssetAllocation(invalid);
+      expect(result.isValid).toBe(false);
+      expect(result.error).toContain("must sum to 100%");
+    });
+
+    it("should reject allocation that sums to more than 100", () => {
+      const invalid: AssetAllocation = {
+        usStocks: 50,
+        internationalStocks: 30,
+        bonds: 30,
+        cash: 10,
+      };
+      const result = validateAssetAllocation(invalid);
+      expect(result.isValid).toBe(false);
+      expect(result.error).toContain("must sum to 100%");
+    });
+
+    it("should reject negative percentages", () => {
+      const invalid: AssetAllocation = {
+        usStocks: 60,
+        internationalStocks: 30,
+        bonds: 20,
+        cash: -10,
+      };
+      const result = validateAssetAllocation(invalid);
+      expect(result.isValid).toBe(false);
+      expect(result.error).toContain("cannot be negative");
+    });
+  });
+
+  describe("calculateExpectedReturn", () => {
+    it("should calculate weighted average return", () => {
+      // 40% US (10%) + 20% Intl (8%) + 35% Bonds (4%) + 5% Cash (2%)
+      // = 4% + 1.6% + 1.4% + 0.1% = 7.1%
+      const result = calculateExpectedReturn(balancedAllocation);
+      expect(result).toBeCloseTo(0.071, 3);
+    });
+
+    it("should return higher for aggressive allocation", () => {
+      const aggressiveReturn = calculateExpectedReturn(aggressiveAllocation);
+      const conservativeReturn = calculateExpectedReturn(conservativeAllocation);
+      expect(aggressiveReturn).toBeGreaterThan(conservativeReturn);
+    });
+
+    it("should throw for invalid allocation", () => {
+      const invalid: AssetAllocation = {
+        usStocks: 50,
+        internationalStocks: 50,
+        bonds: 50,
+        cash: 0,
+      };
+      expect(() => calculateExpectedReturn(invalid)).toThrow("must sum to 100%");
+    });
+
+    it("should return 10% for 100% US stocks", () => {
+      const allStocks: AssetAllocation = {
+        usStocks: 100,
+        internationalStocks: 0,
+        bonds: 0,
+        cash: 0,
+      };
+      expect(calculateExpectedReturn(allStocks)).toBeCloseTo(0.10, 3);
+    });
+
+    it("should return 2% for 100% cash", () => {
+      const allCash: AssetAllocation = {
+        usStocks: 0,
+        internationalStocks: 0,
+        bonds: 0,
+        cash: 100,
+      };
+      expect(calculateExpectedReturn(allCash)).toBeCloseTo(0.02, 3);
+    });
+  });
+
+  describe("describeAllocationStyle", () => {
+    it("should describe aggressive allocation", () => {
+      const style = describeAllocationStyle(aggressiveAllocation);
+      expect(style).toContain("aggressive");
+    });
+
+    it("should describe conservative allocation", () => {
+      const style = describeAllocationStyle(conservativeAllocation);
+      expect(style).toContain("conservative");
+    });
+
+    it("should describe balanced allocation", () => {
+      const style = describeAllocationStyle(balancedAllocation);
+      expect(style).toContain("balanced");
+    });
+
+    it("should describe very aggressive allocation", () => {
+      const veryAggressive: AssetAllocation = {
+        usStocks: 70,
+        internationalStocks: 25,
+        bonds: 5,
+        cash: 0,
+      };
+      const style = describeAllocationStyle(veryAggressive);
+      expect(style).toContain("very aggressive");
+    });
+  });
+
+  describe("suggestAllocationByTimeHorizon", () => {
+    it("should suggest more stocks for longer time horizon", () => {
+      const longHorizon = suggestAllocationByTimeHorizon(30);
+      const shortHorizon = suggestAllocationByTimeHorizon(5);
+      
+      const longStocks = longHorizon.usStocks + longHorizon.internationalStocks;
+      const shortStocks = shortHorizon.usStocks + shortHorizon.internationalStocks;
+      
+      expect(longStocks).toBeGreaterThan(shortStocks);
+    });
+
+    it("should always sum to 100%", () => {
+      for (const years of [5, 10, 15, 20, 25, 30]) {
+        const allocation = suggestAllocationByTimeHorizon(years);
+        const sum = allocation.usStocks + allocation.internationalStocks + 
+                    allocation.bonds + allocation.cash;
+        expect(sum).toBe(100);
+      }
+    });
+
+    it("should maintain US/international ratio around 70/30", () => {
+      const allocation = suggestAllocationByTimeHorizon(20);
+      const totalStocks = allocation.usStocks + allocation.internationalStocks;
+      
+      if (totalStocks > 0) {
+        const usRatio = allocation.usStocks / totalStocks;
+        expect(usRatio).toBeGreaterThan(0.6);
+        expect(usRatio).toBeLessThan(0.8);
+      }
+    });
+
+    it("should not exceed 90% stocks even for very long horizons", () => {
+      const allocation = suggestAllocationByTimeHorizon(50);
+      const totalStocks = allocation.usStocks + allocation.internationalStocks;
+      expect(totalStocks).toBeLessThanOrEqual(90);
+    });
+
+    it("should not go below 20% stocks even for very short horizons", () => {
+      const allocation = suggestAllocationByTimeHorizon(1);
+      const totalStocks = allocation.usStocks + allocation.internationalStocks;
+      expect(totalStocks).toBeGreaterThanOrEqual(20);
     });
   });
 });

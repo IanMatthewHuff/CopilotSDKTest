@@ -33,6 +33,19 @@ At the start of each conversation, include these points:
 - Use the 4% withdrawal rule (25x annual expenses) for retirement targets
 - Offer to save the user's profile at the end of the conversation
 
+## Asset Allocation
+- The three risk tolerance options (conservative/moderate/aggressive) work well for most users
+- If a user wants more control, offer detailed asset allocation across four classes:
+  - US Stocks (~10% historical return)
+  - International Stocks (~8% historical return)
+  - Bonds (~4% historical return)
+  - Cash (~2% historical return)
+- Users can either specify percentages directly, or you can guide them based on:
+  - Time horizon (more years = more stocks)
+  - Comfort with volatility (ask how they'd feel about a 30% drop)
+- Percentages must sum to 100%
+- Custom allocation overrides the simple risk tolerance for return calculations
+
 ## Income Flows (Social Security, Pensions, etc.)
 - Ask users about expected retirement income sources like Social Security, pensions, or annuities
 - For Social Security estimates, suggest visiting ssa.gov/myaccount to find their numbers
@@ -52,7 +65,13 @@ At the start of each conversation, include these points:
 - addIncomeFlow: Add a retirement income source (Social Security, pension, etc.)
 - listIncomeFlows: Show all configured income flows
 - removeIncomeFlow: Remove an income flow
-- calculateIncomeFlowImpact: Calculate how income flows reduce needed savings`;
+- calculateIncomeFlowImpact: Calculate how income flows reduce needed savings
+- setAssetAllocation: Set custom asset allocation percentages
+- calculateAllocationReturn: Calculate expected return for an allocation
+- suggestAllocation: Get allocation suggestion based on time horizon
+- showPresetAllocations: Show preset allocations for each risk level
+- getCurrentAllocation: Get user's current allocation
+- clearCustomAllocation: Revert to risk tolerance preset`;
 
 /**
  * Main entry point for the retirement planner CLI.

@@ -1,4 +1,19 @@
 /**
+ * Detailed asset allocation across asset classes.
+ * All values are percentages (0-100) and must sum to 100.
+ */
+export interface AssetAllocation {
+  /** Percentage in US stocks/equities */
+  usStocks: number;
+  /** Percentage in international stocks/equities */
+  internationalStocks: number;
+  /** Percentage in bonds/fixed income */
+  bonds: number;
+  /** Percentage in cash/money market */
+  cash: number;
+}
+
+/**
  * User's financial profile for retirement planning.
  */
 export interface UserProfile {
@@ -8,6 +23,8 @@ export interface UserProfile {
   currentSavings: number;
   monthlyContribution: number;
   riskTolerance: "conservative" | "moderate" | "aggressive";
+  /** Detailed asset allocation (optional - overrides riskTolerance for return calculation) */
+  assetAllocation?: AssetAllocation;
   expectedMonthlyExpenses?: number;
   incomeFlows?: IncomeFlow[];
   savedAt: string;
@@ -87,3 +104,38 @@ export const RISK_TOLERANCE_RATES: Record<
  * Default inflation rate for calculations.
  */
 export const DEFAULT_INFLATION_RATE = 0.03;
+
+/**
+ * Historical average annual returns by asset class.
+ * These are nominal returns before inflation adjustment.
+ */
+export const ASSET_CLASS_RETURNS: Record<keyof AssetAllocation, number> = {
+  usStocks: 0.10,           // ~10% historical US stock returns
+  internationalStocks: 0.08, // ~8% historical international stock returns
+  bonds: 0.04,              // ~4% historical bond returns
+  cash: 0.02,               // ~2% cash/money market returns
+};
+
+/**
+ * Preset asset allocations for each risk tolerance level.
+ */
+export const PRESET_ALLOCATIONS: Record<UserProfile["riskTolerance"], AssetAllocation> = {
+  conservative: {
+    usStocks: 20,
+    internationalStocks: 10,
+    bonds: 60,
+    cash: 10,
+  },
+  moderate: {
+    usStocks: 40,
+    internationalStocks: 20,
+    bonds: 35,
+    cash: 5,
+  },
+  aggressive: {
+    usStocks: 55,
+    internationalStocks: 30,
+    bonds: 12,
+    cash: 3,
+  },
+};
