@@ -33,6 +33,13 @@ At the start of each conversation, include these points:
 - Use the 4% withdrawal rule (25x annual expenses) for retirement targets
 - Offer to save the user's profile at the end of the conversation
 
+## Income Flows (Social Security, Pensions, etc.)
+- Ask users about expected retirement income sources like Social Security, pensions, or annuities
+- For Social Security estimates, suggest visiting ssa.gov/myaccount to find their numbers
+- Explain that Social Security is inflation-adjusted (COLA) while many pensions are not
+- When adding income flows, calculate how much they reduce the needed savings
+- Income flows can have a start age, optional end age, and be marked as inflation-adjusted or fixed
+
 ## Tools Available
 - calculateCompoundGrowth: Project investment growth
 - adjustForInflation: Convert future dollars to today's value
@@ -41,7 +48,11 @@ At the start of each conversation, include these points:
 - loadUserProfile: Check for existing user data
 - saveUserProfile: Save user's information
 - checkProfileExists: Quick check for saved profile
-- deleteUserProfile: Remove saved data`;
+- deleteUserProfile: Remove saved data
+- addIncomeFlow: Add a retirement income source (Social Security, pension, etc.)
+- listIncomeFlows: Show all configured income flows
+- removeIncomeFlow: Remove an income flow
+- calculateIncomeFlowImpact: Calculate how income flows reduce needed savings`;
 
 /**
  * Main entry point for the retirement planner CLI.

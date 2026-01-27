@@ -4,7 +4,12 @@ import {
   adjustForInflation,
   calculateRetirementTarget,
   projectRetirementAge,
+  generateIncomeFlowId,
+  calculateMonthlyIncomeAtAge,
+  calculateIncomeFlowLifetimeValue,
+  calculateIncomeFlowSummary,
 } from "../src/lib/calculations.js";
+import type { IncomeFlow } from "../src/types/index.js";
 
 describe("calculateCompoundGrowth", () => {
   it("should calculate future value with no contributions", () => {
@@ -128,5 +133,129 @@ describe("projectRetirementAge", () => {
 
     // Can't reach $10M by 65 with these numbers
     expect(age).toBeNull();
+  });
+});
+
+describe("income flow calculations", () => {
+  const sampleSocialSecurity: IncomeFlow = {
+    id: "ss1",
+    name: "Social Security",
+    type: "social_security",
+    monthlyAmount: 2400,
+    startAge: 67,
+    inflationAdjusted: true,
+  };
+
+  const samplePension: IncomeFlow = {
+    id: "pen1",
+    name: "Company Pension",
+    type: "pension",
+    monthlyAmount: 1500,
+    startAge: 65,
+    endAge: 85,
+    inflationAdjusted: false,
+  };
+
+  describe("generateIncomeFlowId", () => {
+    it("should generate unique IDs", () => {
+      const id1 = generateIncomeFlowId();
+      const id2 = generateIncomeFlowId();
+
+      expect(id1).toMatch(/^inc_\d+_[a-z0-9]+$/);
+      expect(id2).toMatch(/^inc_\d+_[a-z0-9]+$/);
+      expect(id1).not.toBe(id2);
+    });
+  });
+
+  describe("calculateMonthlyIncomeAtAge", () => {
+    it("should return 0 before income starts", () => {
+      const income = calculateMonthlyIncomeAtAge([sampleSocialSecurity], 60);
+      expect(income).toBe(0);
+    });
+
+    it("should return monthly amount when income is active", () => {
+      const income = calculateMonthlyIncomeAtAge([sampleSocialSecurity], 70);
+      expect(income).toBe(2400);
+    });
+
+    it("should sum multiple income flows", () => {
+      const income = calculateMonthlyIncomeAtAge(
+        [sampleSocialSecurity, samplePension],
+        70
+      );
+      expect(income).toBe(2400 + 1500);
+    });
+
+    it("should respect end age for limited income flows", () => {
+      const income = calculateMonthlyIncomeAtAge([samplePension], 86);
+      expect(income).toBe(0);
+    });
+
+    it("should include income up to but not including end age", () => {
+      const income = calculateMonthlyIncomeAtAge([samplePension], 84);
+      expect(income).toBe(1500);
+    });
+  });
+
+  describe("calculateIncomeFlowLifetimeValue", () => {
+    it("should calculate lifetime value for inflation-adjusted income", () => {
+      // Social Security at $2400/mo from age 67 to 95 = 28 years
+      // Inflation-adjusted: $2400 * 12 * 28 = $806,400
+      const value = calculateIncomeFlowLifetimeValue(sampleSocialSecurity, 65, 95);
+      expect(value).toBe(2400 * 12 * 28);
+    });
+
+    it("should calculate reduced value for non-inflation-adjusted income", () => {
+      // Pension at $1500/mo from age 65 to 85 = 20 years
+      // Not inflation-adjusted, so real value decreases over time
+      const value = calculateIncomeFlowLifetimeValue(samplePension, 65, 95);
+      
+      // Should be less than simple sum due to inflation
+      const simpleSum = 1500 * 12 * 20;
+      expect(value).toBeLessThan(simpleSum);
+      expect(value).toBeGreaterThan(0);
+    });
+
+    it("should return 0 if retirement is after income ends", () => {
+      const value = calculateIncomeFlowLifetimeValue(samplePension, 90, 95);
+      expect(value).toBe(0);
+    });
+
+    it("should use retirement age as start if later than income start", () => {
+      // Retiring at 70, SS starts at 67, so only count from 70
+      const value = calculateIncomeFlowLifetimeValue(sampleSocialSecurity, 70, 95);
+      expect(value).toBe(2400 * 12 * 25); // 25 years from 70 to 95
+    });
+  });
+
+  describe("calculateIncomeFlowSummary", () => {
+    it("should calculate summary for multiple income flows", () => {
+      const summary = calculateIncomeFlowSummary(
+        [sampleSocialSecurity, samplePension],
+        65,
+        95
+      );
+
+      expect(summary.totalMonthlyIncome).toBe(1500); // Only pension at 65
+      expect(summary.breakdown).toHaveLength(2);
+      expect(summary.savingsReduction).toBeGreaterThan(0);
+      expect(summary.totalLifetimeValue).toBeGreaterThan(0);
+    });
+
+    it("should calculate savings reduction based on 4% rule", () => {
+      // $1500/mo at retirement = $18,000/year
+      // Savings reduction = $18,000 * 25 = $450,000
+      const summary = calculateIncomeFlowSummary([samplePension], 65, 95);
+      expect(summary.savingsReduction).toBe(1500 * 12 * 25);
+    });
+
+    it("should handle empty income flows", () => {
+      const summary = calculateIncomeFlowSummary([], 65, 95);
+
+      expect(summary.totalMonthlyIncome).toBe(0);
+      expect(summary.totalLifetimeValue).toBe(0);
+      expect(summary.savingsReduction).toBe(0);
+      expect(summary.breakdown).toHaveLength(0);
+    });
   });
 });

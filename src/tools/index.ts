@@ -18,9 +18,18 @@ export {
   deleteProfileTool,
 } from "./profileTools.js";
 
+// Income flow tools
+export {
+  addIncomeFlowTool,
+  listIncomeFlowsTool,
+  removeIncomeFlowTool,
+  calculateIncomeFlowImpactTool,
+} from "./incomeFlowTools.js";
+
 // Combined tool list for session creation
 import { compoundGrowthTool, inflationTool, retirementTargetTool, retirementAgeTool } from "./calculationTools.js";
 import { loadProfileTool, saveProfileTool, checkProfileTool, deleteProfileTool } from "./profileTools.js";
+import { addIncomeFlowTool, listIncomeFlowsTool, removeIncomeFlowTool, calculateIncomeFlowImpactTool } from "./incomeFlowTools.js";
 
 /**
  * All tools available to the retirement planning advisor.
@@ -36,4 +45,9 @@ export const retirementTools = [
   saveProfileTool,
   checkProfileTool,
   deleteProfileTool,
+  // Income flow tools
+  addIncomeFlowTool,
+  listIncomeFlowsTool,
+  removeIncomeFlowTool,
+  calculateIncomeFlowImpactTool,
 ];
