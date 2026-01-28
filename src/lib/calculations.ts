@@ -1,4 +1,5 @@
-import type { CompoundGrowthResult, IncomeFlow, IncomeFlowSummary } from "../types/index.js";
+import type { AssetAllocation, CompoundGrowthResult, IncomeFlow, IncomeFlowSummary } from "../types/index.js";
+import { ASSET_CLASS_RETURNS } from "../types/index.js";
 
 /**
  * Calculate the future value of investments with compound growth.
@@ -227,5 +228,115 @@ export function calculateIncomeFlowSummary(
     totalLifetimeValue,
     savingsReduction,
     breakdown,
+  };
+}
+
+// ============================================================================
+// Asset Allocation Calculations
+// ============================================================================
+
+/**
+ * Validates that an asset allocation sums to 100%.
+ *
+ * @param allocation - The asset allocation to validate
+ * @returns Object with isValid boolean and error message if invalid
+ */
+export function validateAssetAllocation(allocation: AssetAllocation): {
+  isValid: boolean;
+  error?: string;
+} {
+  const total = allocation.usStocks + allocation.internationalStocks + allocation.bonds + allocation.cash;
+  
+  // Allow for small floating point errors
+  if (Math.abs(total - 100) > 0.01) {
+    return {
+      isValid: false,
+      error: `Allocation must sum to 100%, currently sums to ${total.toFixed(1)}%`,
+    };
+  }
+
+  // Check for negative values
+  if (allocation.usStocks < 0 || allocation.internationalStocks < 0 || 
+      allocation.bonds < 0 || allocation.cash < 0) {
+    return {
+      isValid: false,
+      error: "Allocation percentages cannot be negative",
+    };
+  }
+
+  return { isValid: true };
+}
+
+/**
+ * Calculate expected annual return based on asset allocation.
+ * Uses historical average returns for each asset class.
+ *
+ * @param allocation - The asset allocation percentages
+ * @returns Expected annual return as a decimal (e.g., 0.07 for 7%)
+ */
+export function calculateExpectedReturn(allocation: AssetAllocation): number {
+  const validation = validateAssetAllocation(allocation);
+  if (!validation.isValid) {
+    throw new Error(validation.error);
+  }
+
+  // Convert percentages to decimals and calculate weighted average
+  const expectedReturn =
+    (allocation.usStocks / 100) * ASSET_CLASS_RETURNS.usStocks +
+    (allocation.internationalStocks / 100) * ASSET_CLASS_RETURNS.internationalStocks +
+    (allocation.bonds / 100) * ASSET_CLASS_RETURNS.bonds +
+    (allocation.cash / 100) * ASSET_CLASS_RETURNS.cash;
+
+  return expectedReturn;
+}
+
+/**
+ * Describes an asset allocation in human-readable terms.
+ *
+ * @param allocation - The asset allocation to describe
+ * @returns Description of the allocation style (e.g., "aggressive", "balanced")
+ */
+export function describeAllocationStyle(allocation: AssetAllocation): string {
+  const stockPercent = allocation.usStocks + allocation.internationalStocks;
+
+  if (stockPercent >= 80) {
+    return "very aggressive (stock-heavy)";
+  } else if (stockPercent >= 65) {
+    return "aggressive";
+  } else if (stockPercent >= 45) {
+    return "balanced";
+  } else if (stockPercent >= 25) {
+    return "conservative";
+  } else {
+    return "very conservative (bond-heavy)";
+  }
+}
+
+/**
+ * Suggests an asset allocation based on years until retirement.
+ * Uses a simple rule of thumb: stock percentage = 110 - age (or years to retirement).
+ *
+ * @param yearsToRetirement - Number of years until retirement
+ * @returns Suggested asset allocation
+ */
+export function suggestAllocationByTimeHorizon(yearsToRetirement: number): AssetAllocation {
+  // More years = more stocks, fewer years = more bonds
+  // Clamp stock allocation between 20% and 90%
+  let stockPercent = Math.min(90, Math.max(20, 40 + yearsToRetirement * 2));
+  
+  // Split stocks between US and international (roughly 70/30)
+  const usStocks = Math.round(stockPercent * 0.7);
+  const internationalStocks = Math.round(stockPercent * 0.3);
+  
+  // Remaining goes to bonds and cash
+  const remaining = 100 - usStocks - internationalStocks;
+  const cash = Math.min(10, Math.max(3, 15 - yearsToRetirement));
+  const bonds = remaining - cash;
+
+  return {
+    usStocks,
+    internationalStocks,
+    bonds: Math.max(0, bonds),
+    cash,
   };
 }
