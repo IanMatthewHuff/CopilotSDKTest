@@ -12,6 +12,8 @@ import {
   calculateExpectedReturn,
   describeAllocationStyle,
   suggestAllocationByTimeHorizon,
+  suggestWithdrawalRate,
+  calculateRetirementTargetWithSWR,
 } from "../src/lib/calculations.js";
 import type { IncomeFlow, AssetAllocation } from "../src/types/index.js";
 
@@ -444,6 +446,94 @@ describe("asset allocation calculations", () => {
       const allocation = suggestAllocationByTimeHorizon(1);
       const totalStocks = allocation.usStocks + allocation.internationalStocks;
       expect(totalStocks).toBeGreaterThanOrEqual(20);
+    });
+  });
+});
+
+describe("safe withdrawal rate calculations", () => {
+  describe("suggestWithdrawalRate", () => {
+    it("should suggest 4% for standard 30-year retirement", () => {
+      const guidance = suggestWithdrawalRate(30);
+      expect(guidance.standardRate).toBe(0.04);
+      expect(guidance.conservativeRate).toBe(0.035);
+    });
+
+    it("should suggest higher rate for shorter retirements", () => {
+      const guidance = suggestWithdrawalRate(20);
+      expect(guidance.standardRate).toBe(0.05);
+      expect(guidance.conservativeRate).toBe(0.045);
+    });
+
+    it("should suggest lower rate for longer retirements", () => {
+      const guidance = suggestWithdrawalRate(40);
+      expect(guidance.standardRate).toBe(0.0325);
+      expect(guidance.conservativeRate).toBe(0.03);
+    });
+
+    it("should use most conservative rate for very long retirements", () => {
+      const guidance = suggestWithdrawalRate(50);
+      // Should return the 40+ year guidance
+      expect(guidance.standardRate).toBe(0.0325);
+      expect(guidance.conservativeRate).toBe(0.03);
+    });
+
+    it("should round up to nearest bracket", () => {
+      // 22 years should use 25-year bracket
+      const guidance = suggestWithdrawalRate(22);
+      expect(guidance.standardRate).toBe(0.045);
+      expect(guidance.conservativeRate).toBe(0.04);
+    });
+
+    it("should include description", () => {
+      const guidance = suggestWithdrawalRate(30);
+      expect(guidance.description).toContain("30 years");
+    });
+  });
+
+  describe("calculateRetirementTargetWithSWR", () => {
+    it("should calculate target with 4% rate (25x)", () => {
+      // $4000/month = $48k/year, 25x = $1.2M
+      const target = calculateRetirementTargetWithSWR(4000, 0.04);
+      expect(target).toBe(1200000);
+    });
+
+    it("should calculate target with 3.5% rate (~28.6x)", () => {
+      // $4000/month = $48k/year, / 0.035 ≈ $1,371,429
+      const target = calculateRetirementTargetWithSWR(4000, 0.035);
+      expect(target).toBe(1371429);
+    });
+
+    it("should calculate target with 5% rate (20x)", () => {
+      // $4000/month = $48k/year, 20x = $960k
+      const target = calculateRetirementTargetWithSWR(4000, 0.05);
+      expect(target).toBe(960000);
+    });
+
+    it("should require lower savings with higher withdrawal rate", () => {
+      const targetConservative = calculateRetirementTargetWithSWR(4000, 0.035);
+      const targetStandard = calculateRetirementTargetWithSWR(4000, 0.04);
+      const targetAggressive = calculateRetirementTargetWithSWR(4000, 0.05);
+
+      expect(targetConservative).toBeGreaterThan(targetStandard);
+      expect(targetStandard).toBeGreaterThan(targetAggressive);
+    });
+
+    it("should throw for invalid withdrawal rate (zero)", () => {
+      expect(() => calculateRetirementTargetWithSWR(4000, 0)).toThrow();
+    });
+
+    it("should throw for invalid withdrawal rate (negative)", () => {
+      expect(() => calculateRetirementTargetWithSWR(4000, -0.04)).toThrow();
+    });
+
+    it("should throw for invalid withdrawal rate (over 100%)", () => {
+      expect(() => calculateRetirementTargetWithSWR(4000, 1.5)).toThrow();
+    });
+
+    it("should match calculateRetirementTarget for 4% rate", () => {
+      const targetDefault = calculateRetirementTarget(4000);
+      const targetWithSWR = calculateRetirementTargetWithSWR(4000, 0.04);
+      expect(targetWithSWR).toBe(targetDefault);
     });
   });
 });

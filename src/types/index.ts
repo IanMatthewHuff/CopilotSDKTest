@@ -106,6 +106,32 @@ export const RISK_TOLERANCE_RATES: Record<
 export const DEFAULT_INFLATION_RATE = 0.03;
 
 /**
+ * Safe withdrawal rate guidance based on retirement length.
+ */
+export interface SWRGuidance {
+  /** Number of years in retirement */
+  retirementYears: number;
+  /** Standard withdrawal rate (decimal, e.g., 0.04 for 4%) */
+  standardRate: number;
+  /** More conservative withdrawal rate for added safety */
+  conservativeRate: number;
+  /** Description of when this guidance applies */
+  description: string;
+}
+
+/**
+ * SWR guidance table based on retirement length.
+ * Longer retirements need lower withdrawal rates to reduce failure risk.
+ */
+export const SWR_GUIDANCE_TABLE: SWRGuidance[] = [
+  { retirementYears: 20, standardRate: 0.050, conservativeRate: 0.045, description: "Short retirement (~20 years)" },
+  { retirementYears: 25, standardRate: 0.045, conservativeRate: 0.040, description: "Moderate retirement (~25 years)" },
+  { retirementYears: 30, standardRate: 0.040, conservativeRate: 0.035, description: "Standard retirement (~30 years)" },
+  { retirementYears: 35, standardRate: 0.035, conservativeRate: 0.0325, description: "Long retirement (~35 years)" },
+  { retirementYears: 40, standardRate: 0.0325, conservativeRate: 0.030, description: "Very long retirement (40+ years)" },
+];
+
+/**
  * Historical average annual returns by asset class.
  * These are nominal returns before inflation adjustment.
  */

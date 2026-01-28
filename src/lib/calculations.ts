@@ -1,5 +1,5 @@
-import type { AssetAllocation, CompoundGrowthResult, IncomeFlow, IncomeFlowSummary } from "../types/index.js";
-import { ASSET_CLASS_RETURNS } from "../types/index.js";
+import type { AssetAllocation, CompoundGrowthResult, IncomeFlow, IncomeFlowSummary, SWRGuidance } from "../types/index.js";
+import { ASSET_CLASS_RETURNS, SWR_GUIDANCE_TABLE } from "../types/index.js";
 
 /**
  * Calculate the future value of investments with compound growth.
@@ -85,6 +85,56 @@ export function calculateRetirementTarget(monthlyExpenses: number): number {
   const annualExpenses = monthlyExpenses * 12;
   // 25x annual expenses = 4% safe withdrawal rate
   return Math.round(annualExpenses * 25);
+}
+
+// ============================================================================
+// Safe Withdrawal Rate (SWR) Calculations
+// ============================================================================
+
+/**
+ * Suggest a safe withdrawal rate based on expected retirement length.
+ * Longer retirements need lower withdrawal rates to reduce the risk of
+ * running out of money.
+ *
+ * @param retirementYears - Expected number of years in retirement
+ * @returns SWR guidance with standard and conservative rates
+ */
+export function suggestWithdrawalRate(retirementYears: number): SWRGuidance {
+  // Find the appropriate guidance based on retirement length
+  // Use the entry for the nearest bracket at or above the retirement years
+  const sorted = [...SWR_GUIDANCE_TABLE].sort((a, b) => a.retirementYears - b.retirementYears);
+  
+  for (const guidance of sorted) {
+    if (retirementYears <= guidance.retirementYears) {
+      return guidance;
+    }
+  }
+  
+  // If retirement is longer than any bracket, use the most conservative (last entry)
+  // TypeScript needs the non-null assertion since we know the table is not empty
+  return sorted[sorted.length - 1]!;
+}
+
+/**
+ * Calculate the target retirement savings needed based on expected expenses
+ * and a specific safe withdrawal rate.
+ *
+ * @param monthlyExpenses - Expected monthly expenses in retirement
+ * @param withdrawalRate - Safe withdrawal rate as decimal (e.g., 0.04 for 4%)
+ * @returns Target savings amount needed
+ */
+export function calculateRetirementTargetWithSWR(
+  monthlyExpenses: number,
+  withdrawalRate: number
+): number {
+  if (withdrawalRate <= 0 || withdrawalRate > 1) {
+    throw new Error("Withdrawal rate must be between 0 and 1 (e.g., 0.04 for 4%)");
+  }
+  
+  const annualExpenses = monthlyExpenses * 12;
+  // Target = annual expenses / withdrawal rate
+  // e.g., $48,000 / 0.04 = $1,200,000
+  return Math.round(annualExpenses / withdrawalRate);
 }
 
 /**
