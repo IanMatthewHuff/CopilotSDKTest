@@ -42,12 +42,21 @@ export {
   calculateTargetWithSWRTool,
 } from "./withdrawalRateTools.js";
 
+// Withdrawal strategy tools
+export {
+  explainWithdrawalStrategyTool,
+  listWithdrawalStrategiesTool,
+  compareWithdrawalStrategiesTool,
+  simulateWithdrawalStrategyTool,
+} from "./withdrawalStrategyTools.js";
+
 // Combined tool list for session creation
 import { compoundGrowthTool, inflationTool, retirementTargetTool, retirementAgeTool } from "./calculationTools.js";
 import { loadProfileTool, saveProfileTool, checkProfileTool, deleteProfileTool } from "./profileTools.js";
 import { addIncomeFlowTool, listIncomeFlowsTool, removeIncomeFlowTool, calculateIncomeFlowImpactTool } from "./incomeFlowTools.js";
 import { setAssetAllocationTool, calculateAllocationReturnTool, suggestAllocationTool, showPresetAllocationsTool, getCurrentAllocationTool, clearCustomAllocationTool } from "./assetAllocationTools.js";
 import { suggestWithdrawalRateTool, calculateTargetWithSWRTool } from "./withdrawalRateTools.js";
+import { explainWithdrawalStrategyTool, listWithdrawalStrategiesTool, compareWithdrawalStrategiesTool, simulateWithdrawalStrategyTool } from "./withdrawalStrategyTools.js";
 
 /**
  * All tools available to the retirement planning advisor.
@@ -78,4 +87,9 @@ export const retirementTools = [
   // Withdrawal rate tools
   suggestWithdrawalRateTool,
   calculateTargetWithSWRTool,
+  // Withdrawal strategy tools
+  explainWithdrawalStrategyTool,
+  listWithdrawalStrategiesTool,
+  compareWithdrawalStrategiesTool,
+  simulateWithdrawalStrategyTool,
 ];
