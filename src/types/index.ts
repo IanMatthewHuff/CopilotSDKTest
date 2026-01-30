@@ -165,3 +165,192 @@ export const PRESET_ALLOCATIONS: Record<UserProfile["riskTolerance"], AssetAlloc
     cash: 3,
   },
 };
+
+// ============================================================================
+// Withdrawal Strategy Types
+// ============================================================================
+
+/**
+ * Types of withdrawal strategies available.
+ */
+export type WithdrawalStrategyType = 
+  | "constant_dollar"
+  | "constant_percentage"
+  | "guardrails"
+  | "bucket";
+
+/**
+ * Detailed information about a withdrawal strategy.
+ */
+export interface WithdrawalStrategy {
+  /** Strategy identifier */
+  type: WithdrawalStrategyType;
+  /** Human-readable name */
+  name: string;
+  /** Brief description of how it works */
+  description: string;
+  /** Advantages of this strategy */
+  pros: string[];
+  /** Disadvantages of this strategy */
+  cons: string[];
+  /** Example scenario to help users understand */
+  example: string;
+}
+
+/**
+ * Result of a single year's withdrawal in a simulation.
+ */
+export interface YearlyWithdrawal {
+  /** Year number (1, 2, 3, etc.) */
+  year: number;
+  /** Portfolio value at start of year */
+  startingBalance: number;
+  /** Amount withdrawn this year */
+  withdrawal: number;
+  /** Portfolio value at end of year (after withdrawal and growth) */
+  endingBalance: number;
+  /** Effective withdrawal rate for this year */
+  withdrawalRate: number;
+}
+
+/**
+ * Result of simulating a withdrawal strategy over time.
+ */
+export interface StrategySimulationResult {
+  /** Strategy that was simulated */
+  strategyType: WithdrawalStrategyType;
+  /** Starting portfolio value */
+  initialPortfolio: number;
+  /** Number of years simulated */
+  years: number;
+  /** Annual return rate used */
+  annualReturn: number;
+  /** Year-by-year withdrawal details */
+  yearlyResults: YearlyWithdrawal[];
+  /** Total amount withdrawn over the period */
+  totalWithdrawn: number;
+  /** Final portfolio balance */
+  finalBalance: number;
+  /** Average annual withdrawal */
+  averageWithdrawal: number;
+  /** Minimum annual withdrawal */
+  minWithdrawal: number;
+  /** Maximum annual withdrawal */
+  maxWithdrawal: number;
+  /** Whether portfolio was depleted before end of simulation */
+  ranOutOfMoney: boolean;
+  /** Year when money ran out (if applicable) */
+  depletionYear?: number;
+}
+
+/**
+ * Guardrails strategy configuration.
+ */
+export interface GuardrailsConfig {
+  /** Initial withdrawal rate (e.g., 0.05 for 5%) */
+  initialRate: number;
+  /** Floor guardrail - cut spending if rate exceeds this (e.g., 0.06 for 6%) */
+  floorGuardrail: number;
+  /** Ceiling guardrail - increase spending if rate drops below this (e.g., 0.04 for 4%) */
+  ceilingGuardrail: number;
+  /** Percentage to adjust spending when guardrail is hit (e.g., 0.10 for 10%) */
+  adjustmentPercent: number;
+}
+
+/**
+ * Default guardrails configuration based on Guyton-Klinger research.
+ */
+export const DEFAULT_GUARDRAILS_CONFIG: GuardrailsConfig = {
+  initialRate: 0.05,
+  floorGuardrail: 0.06,
+  ceilingGuardrail: 0.04,
+  adjustmentPercent: 0.10,
+};
+
+/**
+ * All available withdrawal strategies with their details.
+ */
+export const WITHDRAWAL_STRATEGIES: WithdrawalStrategy[] = [
+  {
+    type: "constant_dollar",
+    name: "Constant Dollar (4% Rule)",
+    description: 
+      "Withdraw a fixed dollar amount each year, adjusted for inflation. " +
+      "This is the traditional approach based on the 4% rule.",
+    pros: [
+      "Predictable, stable income each year",
+      "Simple to understand and plan around",
+      "Well-researched with historical success rates",
+    ],
+    cons: [
+      "Doesn't adapt to market conditions",
+      "Risk of running out of money in prolonged downturns",
+      "May leave significant wealth if markets perform well",
+    ],
+    example: 
+      "With $1,000,000 saved, you'd withdraw $40,000 in year one, then adjust " +
+      "that amount for inflation each year (e.g., $41,200 in year two with 3% inflation).",
+  },
+  {
+    type: "constant_percentage",
+    name: "Constant Percentage",
+    description:
+      "Withdraw a fixed percentage of your portfolio value each year. " +
+      "Your income varies with market performance.",
+    pros: [
+      "Never runs out of money (mathematically impossible)",
+      "Automatically adjusts to market conditions",
+      "Captures more upside in good years",
+    ],
+    cons: [
+      "Income varies year to year - hard to budget",
+      "Bad market years mean spending cuts",
+      "Can feel like a pay cut during downturns",
+    ],
+    example:
+      "With 4% constant percentage on a $1,000,000 portfolio, you'd withdraw $40,000. " +
+      "If the portfolio drops to $800,000 next year, you'd only withdraw $32,000.",
+  },
+  {
+    type: "guardrails",
+    name: "Guardrails (Variable Withdrawal)",
+    description:
+      "Start with a base withdrawal rate, but adjust up or down based on portfolio " +
+      "performance. If your withdrawal rate gets too high, cut spending; if it gets " +
+      "too low, give yourself a raise.",
+    pros: [
+      "Balances income stability with market adaptability",
+      "Can start with higher initial withdrawal rate",
+      "Responds to market reality while limiting volatility",
+    ],
+    cons: [
+      "More complex to manage and track",
+      "Requires flexibility in spending",
+      "Need to monitor and adjust periodically",
+    ],
+    example:
+      "Start withdrawing 5% ($50,000 from $1M). If your withdrawal rate exceeds 6% " +
+      "(portfolio dropped), cut spending by 10%. If it drops below 4% (portfolio grew), " +
+      "increase spending by 10%.",
+  },
+  {
+    type: "bucket",
+    name: "Bucket Strategy",
+    description:
+      "Divide your portfolio into time-based buckets with different risk levels. " +
+      "Short-term needs in cash, medium-term in bonds, long-term in stocks.",
+    pros: [
+      "Psychological comfort - near-term spending is protected",
+      "Don't have to sell stocks in down markets",
+      "Clear mental model for organizing retirement funds",
+    ],
+    cons: [
+      "More complex to set up and manage",
+      "Requires periodic rebalancing between buckets",
+      "May underperform a traditional balanced portfolio",
+    ],
+    example:
+      "Keep 2-3 years of expenses in cash (Bucket 1), 7 years in bonds (Bucket 2), " +
+      "and the rest in stocks (Bucket 3). Spend from cash, refill from bonds in good years.",
+  },
+];
